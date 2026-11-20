@@ -1,0 +1,124 @@
+-- R6 READ: screener, companies whose LATEST quarter has ROE above 15 and debt to equity below 100
+-- run with: EXPLAIN (ANALYZE, BUFFERS)
+SELECT c.ticker, c.name, r.quarter_end, r.return_on_equity, r.debt_to_equity
+FROM company c
+JOIN financial_report r ON r.company_id = c.company_id
+WHERE r.quarter_end = (SELECT max(r2.quarter_end) FROM financial_report r2 WHERE r2.company_id = c.company_id)
+  AND r.return_on_equity > 15
+  AND r.debt_to_equity < 100
+ORDER BY r.return_on_equity DESC
+LIMIT 50;
+
+=== run 1 ===
+                                                                                          QUERY PLAN                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=4895.06..4895.19 rows=50 width=41) (actual time=59.937..59.950 rows=50 loops=1)
+   Buffers: shared hit=19900
+   ->  Sort  (cost=4895.06..4895.32 rows=103 width=41) (actual time=59.935..59.943 rows=50 loops=1)
+         Sort Key: r.return_on_equity DESC
+         Sort Method: top-N heapsort  Memory: 30kB
+         Buffers: shared hit=19900
+         ->  Hash Join  (cost=3628.95..4891.64 rows=103 width=41) (actual time=34.472..59.018 rows=1007 loops=1)
+               Hash Cond: ((c.company_id = r.company_id) AND ((SubPlan 2) = r.quarter_end))
+               Buffers: shared hit=19897
+               ->  Seq Scan on company c  (cost=0.00..107.00 rows=5000 width=25) (actual time=0.003..0.821 rows=5000 loops=1)
+                     Buffers: shared hit=57
+               ->  Hash  (cost=3319.00..3319.00 rows=20663 width=24) (actual time=34.273..34.274 rows=20855 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 1476kB
+                     Buffers: shared hit=1819
+                     ->  Seq Scan on financial_report r  (cost=0.00..3319.00 rows=20663 width=24) (actual time=0.005..27.976 rows=20855 loops=1)
+                           Filter: ((return_on_equity > '15'::numeric) AND (debt_to_equity < '100'::numeric))
+                           Rows Removed by Filter: 79145
+                           Buffers: shared hit=1819
+               SubPlan 2
+                 ->  Result  (cost=4.51..4.52 rows=1 width=4) (actual time=0.003..0.003 rows=1 loops=6007)
+                       Buffers: shared hit=18021
+                       InitPlan 1 (returns $1)
+                         ->  Limit  (cost=0.29..4.51 rows=1 width=4) (actual time=0.003..0.003 rows=1 loops=6007)
+                               Buffers: shared hit=18021
+                               ->  Index Only Scan Backward using pk_financial_report on financial_report r2  (cost=0.29..84.60 rows=20 width=4) (actual time=0.003..0.003 rows=1 loops=6007)
+                                     Index Cond: ((company_id = c.company_id) AND (quarter_end IS NOT NULL))
+                                     Heap Fetches: 6007
+                                     Buffers: shared hit=18021
+ Planning:
+   Buffers: shared hit=320
+ Planning Time: 0.758 ms
+ Execution Time: 60.006 ms
+(32 rows)
+
+
+=== run 2 ===
+                                                                                          QUERY PLAN                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=4895.06..4895.19 rows=50 width=41) (actual time=68.505..68.518 rows=50 loops=1)
+   Buffers: shared hit=19900
+   ->  Sort  (cost=4895.06..4895.32 rows=103 width=41) (actual time=68.503..68.511 rows=50 loops=1)
+         Sort Key: r.return_on_equity DESC
+         Sort Method: top-N heapsort  Memory: 30kB
+         Buffers: shared hit=19900
+         ->  Hash Join  (cost=3628.95..4891.64 rows=103 width=41) (actual time=42.742..67.537 rows=1007 loops=1)
+               Hash Cond: ((c.company_id = r.company_id) AND ((SubPlan 2) = r.quarter_end))
+               Buffers: shared hit=19897
+               ->  Seq Scan on company c  (cost=0.00..107.00 rows=5000 width=25) (actual time=0.005..0.809 rows=5000 loops=1)
+                     Buffers: shared hit=57
+               ->  Hash  (cost=3319.00..3319.00 rows=20663 width=24) (actual time=42.541..42.542 rows=20855 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 1476kB
+                     Buffers: shared hit=1819
+                     ->  Seq Scan on financial_report r  (cost=0.00..3319.00 rows=20663 width=24) (actual time=0.007..34.558 rows=20855 loops=1)
+                           Filter: ((return_on_equity > '15'::numeric) AND (debt_to_equity < '100'::numeric))
+                           Rows Removed by Filter: 79145
+                           Buffers: shared hit=1819
+               SubPlan 2
+                 ->  Result  (cost=4.51..4.52 rows=1 width=4) (actual time=0.003..0.003 rows=1 loops=6007)
+                       Buffers: shared hit=18021
+                       InitPlan 1 (returns $1)
+                         ->  Limit  (cost=0.29..4.51 rows=1 width=4) (actual time=0.003..0.003 rows=1 loops=6007)
+                               Buffers: shared hit=18021
+                               ->  Index Only Scan Backward using pk_financial_report on financial_report r2  (cost=0.29..84.60 rows=20 width=4) (actual time=0.003..0.003 rows=1 loops=6007)
+                                     Index Cond: ((company_id = c.company_id) AND (quarter_end IS NOT NULL))
+                                     Heap Fetches: 6007
+                                     Buffers: shared hit=18021
+ Planning:
+   Buffers: shared hit=320
+ Planning Time: 1.157 ms
+ Execution Time: 68.650 ms
+(32 rows)
+
+
+=== run 3 ===
+                                                                                          QUERY PLAN                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=4895.06..4895.19 rows=50 width=41) (actual time=57.224..57.233 rows=50 loops=1)
+   Buffers: shared hit=19900
+   ->  Sort  (cost=4895.06..4895.32 rows=103 width=41) (actual time=57.222..57.228 rows=50 loops=1)
+         Sort Key: r.return_on_equity DESC
+         Sort Method: top-N heapsort  Memory: 30kB
+         Buffers: shared hit=19900
+         ->  Hash Join  (cost=3628.95..4891.64 rows=103 width=41) (actual time=39.047..56.396 rows=1007 loops=1)
+               Hash Cond: ((c.company_id = r.company_id) AND ((SubPlan 2) = r.quarter_end))
+               Buffers: shared hit=19897
+               ->  Seq Scan on company c  (cost=0.00..107.00 rows=5000 width=25) (actual time=0.005..0.620 rows=5000 loops=1)
+                     Buffers: shared hit=57
+               ->  Hash  (cost=3319.00..3319.00 rows=20663 width=24) (actual time=38.864..38.864 rows=20855 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 1476kB
+                     Buffers: shared hit=1819
+                     ->  Seq Scan on financial_report r  (cost=0.00..3319.00 rows=20663 width=24) (actual time=0.015..31.577 rows=20855 loops=1)
+                           Filter: ((return_on_equity > '15'::numeric) AND (debt_to_equity < '100'::numeric))
+                           Rows Removed by Filter: 79145
+                           Buffers: shared hit=1819
+               SubPlan 2
+                 ->  Result  (cost=4.51..4.52 rows=1 width=4) (actual time=0.002..0.002 rows=1 loops=6007)
+                       Buffers: shared hit=18021
+                       InitPlan 1 (returns $1)
+                         ->  Limit  (cost=0.29..4.51 rows=1 width=4) (actual time=0.002..0.002 rows=1 loops=6007)
+                               Buffers: shared hit=18021
+                               ->  Index Only Scan Backward using pk_financial_report on financial_report r2  (cost=0.29..84.60 rows=20 width=4) (actual time=0.002..0.002 rows=1 loops=6007)
+                                     Index Cond: ((company_id = c.company_id) AND (quarter_end IS NOT NULL))
+                                     Heap Fetches: 6007
+                                     Buffers: shared hit=18021
+ Planning:
+   Buffers: shared hit=320
+ Planning Time: 1.130 ms
+ Execution Time: 57.306 ms
+(32 rows)
+
