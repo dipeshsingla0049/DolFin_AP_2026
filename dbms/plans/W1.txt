@@ -1,0 +1,52 @@
+-- W1 WRITE: register a user
+-- run with: EXPLAIN (ANALYZE, BUFFERS) inside BEGIN; ... ROLLBACK;
+INSERT INTO app_user (name, email, password_hash)
+VALUES ('New User', 'new.user@example.com', '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
+
+=== run 1 ===
+BEGIN
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Insert on app_user  (cost=0.00..0.01 rows=0 width=0) (actual time=0.217..0.217 rows=0 loops=1)
+   Buffers: shared hit=75
+   ->  Result  (cost=0.00..0.01 rows=1 width=100) (actual time=0.028..0.028 rows=1 loops=1)
+         Buffers: shared hit=10
+ Planning:
+   Buffers: shared hit=3
+ Planning Time: 0.053 ms
+ Execution Time: 0.248 ms
+(8 rows)
+
+ROLLBACK
+
+=== run 2 ===
+BEGIN
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Insert on app_user  (cost=0.00..0.01 rows=0 width=0) (actual time=0.225..0.226 rows=0 loops=1)
+   Buffers: shared hit=75
+   ->  Result  (cost=0.00..0.01 rows=1 width=100) (actual time=0.034..0.035 rows=1 loops=1)
+         Buffers: shared hit=10
+ Planning:
+   Buffers: shared hit=3
+ Planning Time: 0.038 ms
+ Execution Time: 0.258 ms
+(8 rows)
+
+ROLLBACK
+
+=== run 3 ===
+BEGIN
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Insert on app_user  (cost=0.00..0.01 rows=0 width=0) (actual time=0.202..0.202 rows=0 loops=1)
+   Buffers: shared hit=75
+   ->  Result  (cost=0.00..0.01 rows=1 width=100) (actual time=0.029..0.029 rows=1 loops=1)
+         Buffers: shared hit=10
+ Planning:
+   Buffers: shared hit=3
+ Planning Time: 0.036 ms
+ Execution Time: 0.228 ms
+(8 rows)
+
+ROLLBACK

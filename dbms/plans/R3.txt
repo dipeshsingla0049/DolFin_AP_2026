@@ -1,0 +1,44 @@
+-- R3 READ: company page, latest market snapshot by ticker
+-- run with: EXPLAIN (ANALYZE, BUFFERS)
+SELECT company_id, ticker, name, price, last_price_date, market_cap, price_to_sales
+FROM company
+WHERE ticker = 'TCK02500';
+
+=== run 1 ===
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
+ Index Scan using uq_company_ticker on company  (cost=0.28..8.30 rows=1 width=55) (actual time=0.021..0.022 rows=1 loops=1)
+   Index Cond: ((ticker)::text = 'TCK02500'::text)
+   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=100
+ Planning Time: 0.237 ms
+ Execution Time: 0.046 ms
+(7 rows)
+
+
+=== run 2 ===
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
+ Index Scan using uq_company_ticker on company  (cost=0.28..8.30 rows=1 width=55) (actual time=0.020..0.021 rows=1 loops=1)
+   Index Cond: ((ticker)::text = 'TCK02500'::text)
+   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=100
+ Planning Time: 0.246 ms
+ Execution Time: 0.044 ms
+(7 rows)
+
+
+=== run 3 ===
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
+ Index Scan using uq_company_ticker on company  (cost=0.28..8.30 rows=1 width=55) (actual time=0.018..0.018 rows=1 loops=1)
+   Index Cond: ((ticker)::text = 'TCK02500'::text)
+   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=100
+ Planning Time: 0.211 ms
+ Execution Time: 0.041 ms
+(7 rows)
+
